@@ -1,0 +1,2 @@
+import './StatCard.css'
+export default function StatCard({label,value,change,icon,tone}:{label:string;value:string;change:string;icon:string;tone:'green'|'gold'|'red'|'blue'}){return <article className={`stat-card stat-card--${tone}`}><div className="stat-card__top"><span>{label}</span><div><span className="material-symbols-rounded">{icon}</span></div></div><strong>{value}</strong><div className="stat-card__foot"><span className={change.startsWith('+')?'positive':change.startsWith('-')?'negative':'neutral'}>{change}</span><small> vs last term</small></div></article>}

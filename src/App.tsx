@@ -1,0 +1,17 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { AppProvider } from './context/AppContext'
+import AppLayout from './components/Layout/AppLayout'
+import Dashboard from './pages/Dashboard/Dashboard'
+import Students from './pages/Students/Students'
+import ModulePage from './pages/ModulePage/ModulePage'
+import StudentDetail from './pages/StudentDetail/StudentDetail'
+import FeeStructures from './pages/FeeStructures/FeeStructures'
+import Payments from './pages/Payments/Payments'
+import Expenses from './pages/Expenses/Expenses'
+import Budgets from './pages/Budgets/Budgets'
+import Reports from './pages/Reports/Reports'
+import AuditLog from './pages/AuditLog/AuditLog'
+import TeamRoles from './pages/TeamRoles/TeamRoles'
+import Settings from './pages/Settings/Settings'
+
+export default function App(){return <AppProvider><BrowserRouter><Routes><Route element={<AppLayout/>}><Route index element={<Dashboard/>}/><Route path="students" element={<Students/>}/><Route path="students/:studentId" element={<StudentDetail/>}/><Route path="fee-structures" element={<FeeStructures/>}/><Route path="payments" element={<Payments/>}/><Route path="expenses" element={<Expenses/>}/><Route path="budgets" element={<Budgets/>}/><Route path="reports" element={<Reports/>}/><Route path="audit" element={<AuditLog/>}/><Route path="team" element={<TeamRoles/>}/><Route path="settings" element={<Settings/>}/></Route></Routes></BrowserRouter></AppProvider>}
