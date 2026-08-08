@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
+import { AuthProvider } from './context/AuthContext'
 import AppLayout from './components/Layout/AppLayout'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Students from './pages/Students/Students'
@@ -13,5 +14,8 @@ import Reports from './pages/Reports/Reports'
 import AuditLog from './pages/AuditLog/AuditLog'
 import TeamRoles from './pages/TeamRoles/TeamRoles'
 import Settings from './pages/Settings/Settings'
+import Login from './pages/Login/Login'
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
+import LanguageBridge from './components/LanguageBridge/LanguageBridge'
 
-export default function App(){return <AppProvider><BrowserRouter><Routes><Route element={<AppLayout/>}><Route index element={<Dashboard/>}/><Route path="students" element={<Students/>}/><Route path="students/:studentId" element={<StudentDetail/>}/><Route path="fee-structures" element={<FeeStructures/>}/><Route path="payments" element={<Payments/>}/><Route path="expenses" element={<Expenses/>}/><Route path="budgets" element={<Budgets/>}/><Route path="reports" element={<Reports/>}/><Route path="audit" element={<AuditLog/>}/><Route path="team" element={<TeamRoles/>}/><Route path="settings" element={<Settings/>}/></Route></Routes></BrowserRouter></AppProvider>}
+export default function App(){return <AppProvider><BrowserRouter><AuthProvider><LanguageBridge/><Routes><Route path="login" element={<Login/>}/><Route element={<ProtectedRoute><AppLayout/></ProtectedRoute>}><Route index element={<Dashboard/>}/><Route path="students" element={<Students/>}/><Route path="students/:studentId" element={<StudentDetail/>}/><Route path="fee-structures" element={<FeeStructures/>}/><Route path="payments" element={<Payments/>}/><Route path="expenses" element={<Expenses/>}/><Route path="budgets" element={<Budgets/>}/><Route path="reports" element={<Reports/>}/><Route path="audit" element={<AuditLog/>}/><Route path="team" element={<TeamRoles/>}/><Route path="settings" element={<Settings/>}/></Route></Routes></AuthProvider></BrowserRouter></AppProvider>}

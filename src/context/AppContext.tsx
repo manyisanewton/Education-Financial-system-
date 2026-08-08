@@ -7,7 +7,7 @@ interface AppContextValue { language: Language; setLanguage: (value: Language) =
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en')
+  const [language, setLanguage] = useState<Language>(()=>localStorage.getItem('shulefinance_language')==='sw'?'sw':'en')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [students,setStudents]=useState<Student[]>(()=>{try{return JSON.parse(localStorage.getItem('shulefinance_students')||'null')||seedStudents}catch{return seedStudents}})
   const [transactions,setTransactions]=useState<StudentTransaction[]>(()=>{try{return JSON.parse(localStorage.getItem('shulefinance_transactions')||'null')||initialTransactions}catch{return initialTransactions}})
