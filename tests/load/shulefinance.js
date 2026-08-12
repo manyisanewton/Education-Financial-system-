@@ -1,0 +1,6 @@
+import http from 'k6/http'
+import { check, sleep } from 'k6'
+export const options={scenarios:{steady:{executor:'constant-vus',vus:20,duration:'30s'},spike:{executor:'ramping-vus',startTime:'30s',stages:[{duration:'10s',target:100},{duration:'20s',target:100},{duration:'10s',target:0}]}},thresholds:{http_req_failed:['rate<0.01'],http_req_duration:['p(95)<750','p(99)<1500']}}
+const base=__ENV.BASE_URL||'http://localhost:4000/api/v1'
+export function setup(){const response=http.post(`${base}/auth/login`,JSON.stringify({schoolCode:__ENV.SCHOOL_CODE||'MOE/PRI/KE/08421',email:__ENV.TEST_EMAIL||'c.njeri@greenfield.ac.ke',password:__ENV.TEST_PASSWORD||'Greenfield@2026'}),{headers:{'Content-Type':'application/json'}});check(response,{'login succeeds':r=>r.status===201});return{cookies:response.cookies}}
+export default function(data){const jar=http.cookieJar();for(const [name,values] of Object.entries(data.cookies))for(const value of values)jar.set(base,name,value.value);const responses=http.batch([['GET',`${base}/dashboard/summary`],['GET',`${base}/students?page=1&pageSize=20`],['GET',`${base}/payments?page=1&pageSize=20`],['GET',`${base}/reports/financial`]]);responses.forEach(response=>check(response,{'request succeeds':r=>r.status===200}));sleep(1)}

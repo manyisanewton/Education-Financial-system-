@@ -16,6 +16,16 @@ const environmentSchema=z.object({
  AUTH_LOCK_MINUTES:z.coerce.number().int().min(1).max(1440).default(15),
  COOKIE_SECURE:z.enum(['true','false']).transform(value=>value==='true').default(false),
  SCHOOL_REGISTRATION_NUMBER:z.string().min(1).default('MOE/PRI/KE/08421'),
+ METRICS_TOKEN:z.string().min(24).optional(),
+ TRUST_PROXY:z.enum(['true','false']).transform(value=>value==='true').default(false),
+}).superRefine((environment,context)=>{
+ if(environment.NODE_ENV!=='production')return
+ if(!environment.COOKIE_SECURE)context.addIssue({code:'custom',path:['COOKIE_SECURE'],message:'must be true in production'})
+ if(!environment.TRUST_PROXY)context.addIssue({code:'custom',path:['TRUST_PROXY'],message:'must be true in production behind the deployment proxy'})
+ if(!environment.METRICS_TOKEN)context.addIssue({code:'custom',path:['METRICS_TOKEN'],message:'is required in production'})
+ if(environment.JWT_ACCESS_SECRET.toLowerCase().includes('replace-with'))context.addIssue({code:'custom',path:['JWT_ACCESS_SECRET'],message:'must not use the example value in production'})
+ const origins=environment.CORS_ORIGINS.split(',').map(origin=>origin.trim())
+ if(origins.some(origin=>origin==='*'||/localhost|127\.0\.0\.1/i.test(origin)))context.addIssue({code:'custom',path:['CORS_ORIGINS'],message:'must contain only explicit production origins'})
 })
 export type Environment=z.infer<typeof environmentSchema>
 export function validateEnvironment(values:Record<string,unknown>){const result=environmentSchema.safeParse(values);if(!result.success)throw new Error(`Invalid environment configuration: ${result.error.issues.map(issue=>`${issue.path.join('.')}: ${issue.message}`).join('; ')}`);return result.data}

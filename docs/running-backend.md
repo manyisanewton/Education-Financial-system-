@@ -2,6 +2,10 @@
 
 This guide starts the NestJS API, PostgreSQL, and Redis from a fresh checkout.
 
+For production hardening, backup drills, load testing, monitoring, and deployment, see [hardening-and-deployment.md](hardening-and-deployment.md).
+
+If watch mode reports `Cannot find module apps/api/dist/main`, stop that process and restart it with `npm run dev:api`. Incremental builds now preserve `dist/main.js` between rebuilds.
+
 ## Requirements
 
 Install these tools first:

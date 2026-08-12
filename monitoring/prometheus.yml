@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: shulefinance-api
+    metrics_path: /api/v1/metrics
+    authorization:
+      credentials_file: /run/secrets/shulefinance_metrics_token
+    static_configs:
+      - targets: [api:4000]

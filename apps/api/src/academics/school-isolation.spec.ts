@@ -1,0 +1,8 @@
+import { NotFoundException } from '@nestjs/common'
+import type { AuthenticatedUser } from '../auth/auth.types'
+import { AcademicsService } from './academics.service'
+const user={id:'user-a',schoolId:'school-a',email:'a@example.test',firstName:'A',lastName:'User',roles:[],permissions:{},sessionId:'session'} as AuthenticatedUser
+describe('school isolation',()=>{
+ it('scopes record lookup to the authenticated school',async()=>{const findFirst=jest.fn().mockResolvedValue(null);const service=new AcademicsService({student:{findFirst}} as any);await expect(service.getStudent(user,'student-from-school-b')).rejects.toBeInstanceOf(NotFoundException);expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({where:{id:'student-from-school-b',schoolId:'school-a'}}))})
+ it('scopes list and count queries to the authenticated school',async()=>{const findMany=jest.fn().mockReturnValue(Promise.resolve([]));const count=jest.fn().mockReturnValue(Promise.resolve(0));const service=new AcademicsService({student:{findMany,count},$transaction:jest.fn().mockResolvedValue([[],0])} as any);await service.listStudents(user,{page:1,pageSize:20} as any);expect(findMany.mock.calls[0][0].where.schoolId).toBe('school-a');expect(count.mock.calls[0][0].where.schoolId).toBe('school-a')})
+ it('rejects a class from another school',async()=>{const service=new AcademicsService({class:{findFirst:jest.fn().mockResolvedValue(null)},term:{findFirst:jest.fn().mockResolvedValue({id:'term'})}} as any);await expect(service.createEnrolment(user,{studentId:'student',classId:'class-b',termId:'term'} as any)).rejects.toBeInstanceOf(NotFoundException)})})

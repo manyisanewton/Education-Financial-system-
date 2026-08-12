@@ -17,4 +17,6 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   return (payload as ApiEnvelope<T>).data
 }
 
+export async function apiDownload(path:string,fileName:string){const response=await fetch(`${API_URL}${path}`,{credentials:'include'});if(!response.ok)throw new ApiError('The export could not be generated.',response.status);const blob=await response.blob();const url=URL.createObjectURL(blob);const anchor=document.createElement('a');anchor.href=url;anchor.download=fileName;anchor.click();URL.revokeObjectURL(url)}
+
 export const schoolCode = import.meta.env.VITE_SCHOOL_CODE || 'MOE/PRI/KE/08421'
