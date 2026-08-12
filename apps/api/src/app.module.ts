@@ -1,0 +1,17 @@
+import { Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { APP_GUARD } from '@nestjs/core'
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { LoggerModule } from 'nestjs-pino'
+import { resolve } from 'node:path'
+import { AuthModule } from './auth/auth.module'
+import { AuthenticationGuard } from './auth/auth.guard'
+import { PermissionsGuard } from './auth/permissions.guard'
+import { validateEnvironment } from './config/environment'
+import { DatabaseModule } from './database/database.module'
+import { HealthModule } from './health/health.module'
+import { RolesModule } from './roles/roles.module'
+import { AppController } from './app.controller'
+
+@Module({imports:[ConfigModule.forRoot({isGlobal:true,validate:validateEnvironment,envFilePath:[resolve(__dirname,'../.env'),resolve(__dirname,'../../../.env')]}),ThrottlerModule.forRoot([{ttl:60000,limit:60}]),LoggerModule.forRoot({pinoHttp:{level:process.env.LOG_LEVEL||'info',redact:{paths:['req.headers.authorization','req.headers.cookie','res.headers.set-cookie','req.body.password','req.body.currentPassword','req.body.newPassword','req.body.token'],censor:'[REDACTED]'},genReqId:req=>req.headers['x-request-id']?.toString()||crypto.randomUUID()}}),DatabaseModule,AuthModule,HealthModule,RolesModule],controllers:[AppController],providers:[{provide:APP_GUARD,useClass:ThrottlerGuard},{provide:APP_GUARD,useClass:AuthenticationGuard},{provide:APP_GUARD,useClass:PermissionsGuard}]})
+export class AppModule{}

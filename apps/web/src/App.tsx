@@ -1,0 +1,25 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AppProvider } from './context/AppContext'
+import { AuthProvider } from './context/AuthContext'
+import AppLayout from './components/Layout/AppLayout'
+import Dashboard from './pages/Dashboard/Dashboard'
+import Students from './pages/Students/Students'
+import StudentDetail from './pages/StudentDetail/StudentDetail'
+import FeeStructures from './pages/FeeStructures/FeeStructures'
+import Payments from './pages/Payments/Payments'
+import Expenses from './pages/Expenses/Expenses'
+import Budgets from './pages/Budgets/Budgets'
+import Reports from './pages/Reports/Reports'
+import AuditLog from './pages/AuditLog/AuditLog'
+import TeamRoles from './pages/TeamRoles/TeamRoles'
+import Settings from './pages/Settings/Settings'
+import Login from './pages/Login/Login'
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
+import LanguageBridge from './components/LanguageBridge/LanguageBridge'
+import PermissionRoute from './components/PermissionRoute/PermissionRoute'
+import { useAuth } from './context/AuthContext'
+import { allModules } from './config/modulePermissions'
+
+function WorkspaceHome(){const {hasPermission}=useAuth();if(hasPermission('dashboard.view'))return <Dashboard/>;const destination=allModules.find(module=>module.path!=='/'&&hasPermission(module.permission));return destination?<Navigate to={destination.path} replace/>:<section className="empty-state"><span className="material-symbols-rounded">lock</span><h2>No modules assigned</h2><p>Ask an administrator to assign access to your role.</p></section>}
+
+export default function App(){return <AppProvider><BrowserRouter><AuthProvider><LanguageBridge/><Routes><Route path="login" element={<Login/>}/><Route element={<ProtectedRoute><AppLayout/></ProtectedRoute>}><Route index element={<WorkspaceHome/>}/><Route path="students" element={<PermissionRoute permission="students.view"><Students/></PermissionRoute>}/><Route path="students/:studentId" element={<PermissionRoute permission="students.view"><StudentDetail/></PermissionRoute>}/><Route path="fee-structures" element={<PermissionRoute permission="fees.view"><FeeStructures/></PermissionRoute>}/><Route path="payments" element={<PermissionRoute permission="payments.view"><Payments/></PermissionRoute>}/><Route path="expenses" element={<PermissionRoute permission="expenses.view"><Expenses/></PermissionRoute>}/><Route path="budgets" element={<PermissionRoute permission="budgets.view"><Budgets/></PermissionRoute>}/><Route path="reports" element={<PermissionRoute permission="reports.view"><Reports/></PermissionRoute>}/><Route path="audit" element={<PermissionRoute permission="audit.view"><AuditLog/></PermissionRoute>}/><Route path="team" element={<PermissionRoute permission="team.manage"><TeamRoles/></PermissionRoute>}/><Route path="settings" element={<PermissionRoute permission="settings.manage"><Settings/></PermissionRoute>}/></Route></Routes></AuthProvider></BrowserRouter></AppProvider>}

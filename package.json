@@ -1,32 +1,21 @@
 {
-  "name": "shulefinance-staff-portal",
+  "name": "shulefinance-platform",
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "react-router-dom": "latest",
-    "recharts": "latest",
-    "sweetalert2": "latest"
-  },
-  "devDependencies": {
-    "@eslint/js": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "eslint": "latest",
-    "eslint-plugin-react-hooks": "latest",
-    "eslint-plugin-react-refresh": "latest",
-    "globals": "latest",
-    "typescript-eslint": "latest"
+    "dev": "npm run dev --workspace @shulefinance/web",
+    "dev:web": "npm run dev --workspace @shulefinance/web",
+    "dev:api": "npm run start:dev --workspace @shulefinance/api",
+    "build:api": "npm run build --workspace @shulefinance/api",
+    "test:api": "npm run test --workspace @shulefinance/api",
+    "db:generate": "npm run generate --workspace @shulefinance/database",
+    "db:migrate": "npm run migrate:dev --workspace @shulefinance/database",
+    "db:seed": "npm run seed --workspace @shulefinance/database",
+    "build": "npm run build --workspace @shulefinance/web",
+    "build:web": "npm run build --workspace @shulefinance/web",
+    "lint": "npm run lint --workspace @shulefinance/web",
+    "preview": "npm run preview --workspace @shulefinance/web"
   }
 }
