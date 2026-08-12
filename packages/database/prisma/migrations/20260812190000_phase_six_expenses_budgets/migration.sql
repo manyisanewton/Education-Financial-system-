@@ -1,0 +1,23 @@
+ALTER TABLE "budgets" ADD COLUMN "approved_at" TIMESTAMP(3), ADD COLUMN "approved_by_id" UUID, ADD COLUMN "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, ADD COLUMN "created_by_id" UUID, ADD COLUMN "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "expense_approvals" ADD COLUMN "decided_by_id" UUID;
+ALTER TABLE "expenses" ADD COLUMN "category_id" UUID, ADD COLUMN "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, ADD COLUMN "notes" TEXT, ADD COLUMN "payment_method" "PaymentMethod", ADD COLUMN "reference" TEXT, ADD COLUMN "requested_by_id" UUID, ADD COLUMN "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, ADD COLUMN "vendor_id" UUID;
+CREATE TABLE "vendors" ("id" UUID NOT NULL, "school_id" UUID NOT NULL, "name" TEXT NOT NULL, "email" TEXT, "phone" TEXT, "is_active" BOOLEAN NOT NULL DEFAULT true, "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "vendors_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "expense_categories" ("id" UUID NOT NULL, "school_id" UUID NOT NULL, "name" TEXT NOT NULL, "is_active" BOOLEAN NOT NULL DEFAULT true, CONSTRAINT "expense_categories_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "expense_documents" ("id" UUID NOT NULL, "expense_id" UUID NOT NULL, "file_name" TEXT NOT NULL, "storage_key" TEXT NOT NULL, "mime_type" TEXT NOT NULL, "size" INTEGER NOT NULL, "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "expense_documents_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "vendors_school_id_name_key" ON "vendors"("school_id", "name");
+CREATE UNIQUE INDEX "expense_categories_school_id_name_key" ON "expense_categories"("school_id", "name");
+CREATE INDEX "expense_documents_expense_id_idx" ON "expense_documents"("expense_id");
+ALTER TABLE "expenses" ADD CONSTRAINT "expenses_vendor_id_fkey" FOREIGN KEY ("vendor_id") REFERENCES "vendors"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "expenses" ADD CONSTRAINT "expenses_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "expense_categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "expenses" ADD CONSTRAINT "expenses_requested_by_id_fkey" FOREIGN KEY ("requested_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "expense_approvals" ADD CONSTRAINT "expense_approvals_decided_by_id_fkey" FOREIGN KEY ("decided_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "vendors" ADD CONSTRAINT "vendors_school_id_fkey" FOREIGN KEY ("school_id") REFERENCES "schools"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "expense_categories" ADD CONSTRAINT "expense_categories_school_id_fkey" FOREIGN KEY ("school_id") REFERENCES "schools"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "expense_documents" ADD CONSTRAINT "expense_documents_expense_id_fkey" FOREIGN KEY ("expense_id") REFERENCES "expenses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "budgets" ADD CONSTRAINT "budgets_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "budgets" ADD CONSTRAINT "budgets_approved_by_id_fkey" FOREIGN KEY ("approved_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+INSERT INTO "vendors" ("id", "school_id", "name") SELECT gen_random_uuid(), "school_id", "vendor" FROM "expenses" GROUP BY "school_id", "vendor" ON CONFLICT DO NOTHING;
+INSERT INTO "expense_categories" ("id", "school_id", "name") SELECT gen_random_uuid(), "school_id", "category" FROM "expenses" GROUP BY "school_id", "category" ON CONFLICT DO NOTHING;
+UPDATE "expenses" e SET "vendor_id"=v."id" FROM "vendors" v WHERE v."school_id"=e."school_id" AND v."name"=e."vendor";
+UPDATE "expenses" e SET "category_id"=c."id" FROM "expense_categories" c WHERE c."school_id"=e."school_id" AND c."name"=e."category";

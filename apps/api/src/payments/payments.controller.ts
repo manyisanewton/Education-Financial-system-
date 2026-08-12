@@ -9,10 +9,10 @@ import { PaymentsService } from './payments.service'
 export class PaymentsController{
  constructor(private readonly payments:PaymentsService){}
  @Get('payments') @RequirePermissions('payments.view') list(@CurrentUser() user:AuthenticatedUser,@Query() query:PaymentListQueryDto){return this.payments.list(user,query)}
- @Post('payments') @RequirePermissions('payments.manage') capture(@CurrentUser() user:AuthenticatedUser,@Body() dto:CapturePaymentDto,@Req() req:Request){return this.payments.capture(user,dto,this.context(req))}
+ @Post('payments') @RequirePermissions('payments.record') capture(@CurrentUser() user:AuthenticatedUser,@Body() dto:CapturePaymentDto,@Req() req:Request){return this.payments.capture(user,dto,this.context(req))}
  @Get('payments/:id/receipt') @RequirePermissions('payments.view') receipt(@CurrentUser() user:AuthenticatedUser,@Param('id') id:string){return this.payments.receipt(user,id)}
- @Post('payments/:id/reverse') @RequirePermissions('payments.manage') reverse(@CurrentUser() user:AuthenticatedUser,@Param('id') id:string,@Body() dto:ReversePaymentDto,@Req() req:Request){return this.payments.reverse(user,id,dto,this.context(req))}
+ @Post('payments/:id/reverse') @RequirePermissions('payments.reverse') reverse(@CurrentUser() user:AuthenticatedUser,@Param('id') id:string,@Body() dto:ReversePaymentDto,@Req() req:Request){return this.payments.reverse(user,id,dto,this.context(req))}
  @Get('reconciliations') @RequirePermissions('payments.view') reconciliations(@CurrentUser() user:AuthenticatedUser){return this.payments.listReconciliations(user)}
- @Post('reconciliations') @RequirePermissions('payments.manage') reconcile(@CurrentUser() user:AuthenticatedUser,@Body() dto:CreateReconciliationDto,@Req() req:Request){return this.payments.reconcile(user,dto,this.context(req))}
+ @Post('reconciliations') @RequirePermissions('payments.record') reconcile(@CurrentUser() user:AuthenticatedUser,@Body() dto:CreateReconciliationDto,@Req() req:Request){return this.payments.reconcile(user,dto,this.context(req))}
  private context(req:Request):RequestContext{return{ipAddress:req.ip,requestId:req.id?.toString(),userAgent:req.headers['user-agent']}}
 }

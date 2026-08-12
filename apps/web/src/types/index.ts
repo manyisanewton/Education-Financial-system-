@@ -46,6 +46,7 @@ export interface Payment {
 
 export interface Expense {
   id: string
+  backendId?: string
   description: string
   category: string
   vendor: string
@@ -60,8 +61,8 @@ export interface Expense {
   notes?: string
   reviewNote?: string
 }
-export interface BudgetItem { id:string; category:string; allocated:number }
-export interface Budget { id:string; name:string; term:string; year:number; items:BudgetItem[]; status:'Draft'|'Pending'|'Approved'|'Archived'; createdBy:string; approvedBy?:string; updatedAt:string; note?:string }
+export interface BudgetItem { id:string; category:string; allocated:number; actual?:number }
+export interface Budget { id:string; name:string; term:string; termId?:string; year:number; items:BudgetItem[]; status:'Draft'|'Pending'|'Approved'|'Rejected'|'Archived'; createdBy:string; approvedBy?:string; updatedAt:string; note?:string }
 export interface AuditEvent { id:string; timestamp:string; user:string; role:string; action:string; module:'Students'|'Fees'|'Payments'|'Expenses'|'Budgets'|'Team'|'System'; recordId:string; description:string; severity:'Info'|'Success'|'Warning'|'Critical'; changes?:{field:string;before:string;after:string}[]; ipAddress?:string }
 export type PermissionLevel='None'|'View'|'Manage'|'Approve'
 export interface StaffRole { id:string; name:string; description:string; members:number; color:string; permissions:Record<string,PermissionLevel>; system?:boolean }
