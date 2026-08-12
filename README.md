@@ -32,3 +32,7 @@ Phase Two adds server-backed staff authentication, rotating sessions, account lo
 For complete local backend setup and troubleshooting, see [docs/running-backend.md](docs/running-backend.md).
 
 Role persistence and permission-level behavior are documented in [docs/roles-and-permissions.md](docs/roles-and-permissions.md).
+
+Phase Three student, guardian, class, term, enrolment, search, and pagination behavior is documented in [docs/academic-records.md](docs/academic-records.md).
+
+Phase Four fee structures, assignments, batch invoicing, credits, adjustments, and statements are documented in [docs/fees-and-invoices.md](docs/fees-and-invoices.md).

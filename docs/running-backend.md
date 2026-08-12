@@ -188,7 +188,7 @@ npm run start:prod --workspace @shulefinance/api
 In an actual deployment, apply committed migrations without creating new migration files:
 
 ```bash
-npm run migrate:deploy --workspace @shulefinance/database
+npm run db:deploy
 ```
 
 ## Common problems

@@ -57,6 +57,22 @@ enum TransactionStatus {
   VOIDED
 }
 
+enum ReconciliationStatus {
+  MATCHED
+  DISCREPANCY
+}
+
+enum ReconciliationItemStatus {
+  MATCHED
+  MISSING_PAYMENT
+  AMOUNT_MISMATCH
+}
+
+enum AdjustmentType {
+  DEBIT
+  CREDIT
+}
+
 model School {
   id                 String         @id @default(uuid()) @db.Uuid
   name               String
@@ -77,6 +93,11 @@ model School {
   expenses           Expense[]
   budgets            Budget[]
   auditEvents        AuditEvent[]
+  invoiceBatches     InvoiceBatch[]
+  creditNotes        CreditNote[]
+  invoiceAdjustments InvoiceAdjustment[]
+  receiptSequence    ReceiptSequence?
+  reconciliations    PaymentReconciliation[]
   settings           SchoolSetting?
 
   @@map("schools")
@@ -232,6 +253,7 @@ model Class {
   school        School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   enrolments    Enrolment[]
   feeStructures FeeStructure[]
+  feeAssignments FeeStructureAssignment[]
 
   @@unique([schoolId, name])
   @@map("classes")
@@ -250,6 +272,7 @@ model Student {
   enrolments         Enrolment[]
   invoices           Invoice[]
   paymentAllocations PaymentAllocation[]
+  creditNotes        CreditNote[]
 
   @@unique([schoolId, admissionNumber])
   @@index([schoolId, lastName, firstName])
@@ -266,7 +289,7 @@ model Guardian {
   school    School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   students  StudentGuardian[]
 
-  @@index([schoolId, phone])
+  @@unique([schoolId, phone])
   @@map("guardians")
 }
 
@@ -304,14 +327,29 @@ model FeeStructure {
   name      String
   status    RecordStatus       @default(DRAFT)
   createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
   school    School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   term      Term               @relation(fields: [termId], references: [id])
   class     Class?             @relation(fields: [classId], references: [id])
   items     FeeStructureItem[]
   batches   InvoiceBatch[]
+  assignments FeeStructureAssignment[]
 
   @@index([schoolId, termId, status])
   @@map("fee_structures")
+}
+
+model FeeStructureAssignment {
+  id             String       @id @default(uuid()) @db.Uuid
+  feeStructureId String       @map("fee_structure_id") @db.Uuid
+  classId        String       @map("class_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at")
+  feeStructure   FeeStructure @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
+  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([feeStructureId, classId])
+  @@index([classId])
+  @@map("fee_structure_assignments")
 }
 
 model FeeStructureItem {
@@ -326,12 +364,16 @@ model FeeStructureItem {
 
 model InvoiceBatch {
   id             String       @id @default(uuid()) @db.Uuid
+  schoolId       String       @map("school_id") @db.Uuid
   feeStructureId String       @map("fee_structure_id") @db.Uuid
-  idempotencyKey String       @unique @map("idempotency_key")
+  idempotencyKey String       @map("idempotency_key")
   createdAt      DateTime     @default(now()) @map("created_at")
   feeStructure   FeeStructure @relation(fields: [feeStructureId], references: [id])
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   invoices       Invoice[]
 
+  @@unique([schoolId, idempotencyKey])
+  @@index([schoolId, createdAt])
   @@map("invoice_batches")
 }
 
@@ -351,10 +393,56 @@ model Invoice {
   batch         InvoiceBatch?       @relation(fields: [batchId], references: [id])
   items         InvoiceItem[]
   allocations   PaymentAllocation[]
+  creditNotes   CreditNote[]
+  adjustments   InvoiceAdjustment[]
 
   @@unique([schoolId, invoiceNumber])
   @@index([schoolId, studentId, status])
   @@map("invoices")
+}
+
+model CreditNote {
+  id               String       @id @default(uuid()) @db.Uuid
+  schoolId         String       @map("school_id") @db.Uuid
+  studentId        String       @map("student_id") @db.Uuid
+  invoiceId        String       @map("invoice_id") @db.Uuid
+  creditNoteNumber String       @map("credit_note_number")
+  reason           String
+  status           RecordStatus @default(ACTIVE)
+  issuedAt         DateTime     @default(now()) @map("issued_at")
+  school           School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student          Student      @relation(fields: [studentId], references: [id])
+  invoice          Invoice      @relation(fields: [invoiceId], references: [id])
+  items            CreditNoteItem[]
+
+  @@unique([schoolId, creditNoteNumber])
+  @@index([schoolId, studentId, issuedAt])
+  @@map("credit_notes")
+}
+
+model CreditNoteItem {
+  id           String     @id @default(uuid()) @db.Uuid
+  creditNoteId String     @map("credit_note_id") @db.Uuid
+  description  String
+  amount       Decimal    @db.Decimal(14, 2)
+  creditNote   CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade)
+
+  @@map("credit_note_items")
+}
+
+model InvoiceAdjustment {
+  id          String         @id @default(uuid()) @db.Uuid
+  schoolId    String         @map("school_id") @db.Uuid
+  invoiceId   String         @map("invoice_id") @db.Uuid
+  type        AdjustmentType
+  description String
+  amount      Decimal        @db.Decimal(14, 2)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  school      School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  invoice     Invoice        @relation(fields: [invoiceId], references: [id])
+
+  @@index([schoolId, invoiceId, createdAt])
+  @@map("invoice_adjustments")
 }
 
 model InvoiceItem {
@@ -377,15 +465,60 @@ model Payment {
   status            TransactionStatus   @default(COMPLETED)
   receivedAt        DateTime            @default(now()) @map("received_at")
   reversedPaymentId String?             @unique @map("reversed_payment_id") @db.Uuid
+  idempotencyKey    String?             @map("idempotency_key")
+  reversalReason    String?             @map("reversal_reason")
+  reversedAt        DateTime?           @map("reversed_at")
   school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   allocations       PaymentAllocation[]
   reversedPayment   Payment?            @relation("PaymentReversal", fields: [reversedPaymentId], references: [id])
   reversal          Payment?            @relation("PaymentReversal")
+  reconciliationItems ReconciliationItem[]
 
   @@unique([schoolId, reference])
   @@unique([schoolId, receiptNumber])
+  @@unique([schoolId, idempotencyKey])
   @@index([schoolId, receivedAt])
   @@map("payments")
+}
+
+model ReceiptSequence {
+  schoolId   String @id @map("school_id") @db.Uuid
+  lastNumber Int    @default(0) @map("last_number")
+  school     School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@map("receipt_sequences")
+}
+
+model PaymentReconciliation {
+  id              String               @id @default(uuid()) @db.Uuid
+  schoolId        String               @map("school_id") @db.Uuid
+  name            String
+  periodStart     DateTime             @map("period_start") @db.Date
+  periodEnd       DateTime             @map("period_end") @db.Date
+  status          ReconciliationStatus
+  statementTotal  Decimal              @map("statement_total") @db.Decimal(14, 2)
+  matchedTotal    Decimal              @map("matched_total") @db.Decimal(14, 2)
+  createdAt       DateTime             @default(now()) @map("created_at")
+  school          School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  items           ReconciliationItem[]
+
+  @@index([schoolId, createdAt])
+  @@map("payment_reconciliations")
+}
+
+model ReconciliationItem {
+  id               String                   @id @default(uuid()) @db.Uuid
+  reconciliationId String                   @map("reconciliation_id") @db.Uuid
+  paymentId        String?                  @map("payment_id") @db.Uuid
+  externalReference String                  @map("external_reference")
+  externalAmount   Decimal                  @map("external_amount") @db.Decimal(14, 2)
+  status           ReconciliationItemStatus
+  reconciliation   PaymentReconciliation    @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  payment          Payment?                 @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@unique([reconciliationId, externalReference])
+  @@index([paymentId])
+  @@map("reconciliation_items")
 }
 
 model PaymentAllocation {

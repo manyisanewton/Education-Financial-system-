@@ -13,11 +13,24 @@ export interface Student {
   status: Status
   initials: string
   color: string
+  classId?: string | null
+  termId?: string | null
+  term?: string | null
+  guardianId?: string | null
+  guardianEmail?: string | null
+  academicStatus?: 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'TRANSFERRED'
 }
 
+export interface AcademicClass { id:string; name:string; grade:string; enrolments:number }
+export interface AcademicTerm { id:string; name:string; startsOn:string; endsOn:string; status:'PLANNED'|'ACTIVE'|'CLOSED' }
+export interface AcademicYear { id:string; name:string; startsOn:string; endsOn:string; terms:AcademicTerm[] }
+export interface StudentPagination { page:number; pageSize:number; total:number; totalPages:number }
+export interface CreateStudentInput { fullName:string; admissionNumber:string; classId:string; termId:string; guardianName:string; guardianPhone:string; guardianEmail?:string; relationship?:string }
+export interface UpdateStudentInput { fullName?:string; guardianName?:string; guardianPhone?:string; guardianEmail?:string; classId?:string; termId?:string; status?:'ACTIVE'|'INACTIVE'|'GRADUATED'|'TRANSFERRED' }
+
 export interface FeeItem { id: string; label: string; amount: number }
-export interface StudentTransaction { id: string; studentId: string; type: 'Invoice' | 'Payment'; description: string; date: string; amount: number; method?: string; reference?: string; status: 'Completed' | 'Pending' | 'Voided' }
-export interface FeeStructure { id:string; name:string; grade:string; term:string; year:number; items:FeeItem[]; status:'Draft'|'Active'|'Archived'; updatedAt:string }
+export interface StudentTransaction { id: string; backendId?:string; studentId: string; type: 'Invoice' | 'Payment' | 'Credit note' | 'Adjustment'; description: string; date: string; amount: number; debit?:number; credit?:number; balance?:number; method?: string; reference?: string; status: 'Completed' | 'Pending' | 'Voided' | 'Active' | 'Archived' }
+export interface FeeStructure { id:string; name:string; grade:string; termId?:string; term:string; year:number; items:FeeItem[]; classIds?:string[]; classes?:string[]; batches?:number; status:'Draft'|'Active'|'Archived'; updatedAt:string }
 export interface InvoiceBatch { id:string; structureId:string; structureName:string; grade:string; term:string; count:number; total:number; date:string; status:'Generated'|'Partially paid'|'Paid' }
 
 export interface Payment {
